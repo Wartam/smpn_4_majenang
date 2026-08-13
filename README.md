@@ -71,6 +71,11 @@ PORT=8080 bun run start
 ├── public/
 │   ├── app.js        # Interaksi menu mobile, navigasi aktif, dan form kontak
 │   ├── index.html    # Markup dan konten halaman utama
+│   ├── admin.html    # Dashboard admin dan pembagian peran
+│   ├── admin.css     # Gaya dashboard admin
+│   ├── admin.js      # Interaksi dashboard admin
+│   ├── login.html    # Halaman login admin
+│   ├── login.js      # Proses login admin
 │   ├── profil.html   # Halaman profil sekolah
 │   └── styles.css    # Gaya visual dan responsive layout
 ├── src/
@@ -78,6 +83,19 @@ PORT=8080 bun run start
 ├── package.json
 └── README.md
 ```
+
+## Database SQLite
+
+Data admin disimpan menggunakan SQLite melalui `bun:sqlite`. Saat server pertama kali dijalankan, aplikasi otomatis membuat database `data/smpn4majenang.sqlite`, tabel `roles`, `admin_users`, dan empat data admin contoh.
+
+Endpoint yang tersedia:
+
+```text
+GET /api/admin/users  # Daftar admin dan perannya
+GET /api/admin/roles  # Daftar peran dan permission
+```
+
+Folder `data/` sengaja tidak dilacak Git karena berisi database lokal. Salin database tersebut jika ingin memindahkan data development. Untuk production, tambahkan autentikasi/login dan validasi permission di server sebelum endpoint admin dibuka.
 
 ## Mengubah konten
 
@@ -94,6 +112,34 @@ Konten khusus halaman Profil Sekolah berada di `public/profil.html`. Halaman ini
 ```text
 http://localhost:3000/profil.html
 ```
+
+## Halaman admin
+
+Dashboard admin dapat dibuka melalui:
+
+```text
+http://localhost:3000/admin.html
+```
+
+Halaman admin dilindungi login session cookie. Peran yang disiapkan adalah Admin Utama (akses penuh), Admin Konten (berita, blog, dan media), Admin Akademik (profil dan informasi sekolah), serta Admin Layanan (pesan dan informasi kontak).
+
+Saat database pertama kali dibuat, semua akun contoh menggunakan password awal dari environment variable `ADMIN_INITIAL_PASSWORD`. Jika variable tersebut tidak diatur, password default development adalah `AdminSMPN4!2026`. Segera ubah password dan jangan gunakan default ini pada production.
+
+Untuk development, salin `.env.example` menjadi `.env` dan isi password yang kuat:
+
+```bash
+cp .env.example .env
+```
+
+API login dan logout:
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+Middleware server memeriksa session yang masih berlaku dan permission role sebelum endpoint admin diproses. Session berlaku 7 hari dan cookie menggunakan `HttpOnly` serta `SameSite=Lax`.
 
 Warna utama dapat diubah di bagian `:root` pada `public/styles.css`:
 

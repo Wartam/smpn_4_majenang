@@ -1,6 +1,12 @@
 # Dependencies
 node_modules/
 
+# Local SQLite data
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
 # Bun
 .bun/
 bun.lockb
@@ -28,4 +34,3 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-
