@@ -97,6 +97,52 @@ GET /api/admin/roles  # Daftar peran dan permission
 
 Folder `data/` sengaja tidak dilacak Git karena berisi database lokal. Salin database tersebut jika ingin memindahkan data development. Untuk production, tambahkan autentikasi/login dan validasi permission di server sebelum endpoint admin dibuka.
 
+## Docker
+
+### Build lokal
+
+Build image dengan nama yang mengikuti repository:
+
+```bash
+docker build -t smpn_4_majenang:latest .
+```
+
+Jalankan image lokal dengan volume SQLite:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e ADMIN_INITIAL_PASSWORD='GantiDenganPasswordKuat' \
+  -v smpn4_data:/app/data \
+  smpn_4_majenang:latest
+```
+
+### GitHub Actions manual
+
+Workflow berada di `.github/workflows/docker-image.yml` dan hanya berjalan ketika dijalankan manual dari tab **Actions** di GitHub. Workflow tersebut membangun image dan, jika opsi `push_image` dipilih, mengunggahnya ke:
+
+```text
+ghcr.io/wartam/smpn_4_majenang:latest
+```
+
+Nama owner dan repository pada workflow diambil otomatis dari `${{ github.repository }}`, sehingga tetap mengikuti nama repository jika repository dipindahkan.
+
+### Docker Compose
+
+Buat file `.env` terlebih dahulu:
+
+```env
+ADMIN_INITIAL_PASSWORD=GantiDenganPasswordKuat
+```
+
+Kemudian jalankan:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Website tersedia di `http://localhost:3000`. Volume `smpn4_data` menyimpan database SQLite di luar container agar data admin tidak hilang ketika container dibuat ulang.
+
 ## Mengubah konten
 
 Sebagian besar konten website berada di `public/index.html`. File tersebut dapat diubah untuk menyesuaikan:

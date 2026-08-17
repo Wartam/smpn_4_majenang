@@ -1,0 +1,16 @@
+services:
+  smpn4majenang:
+    image: ghcr.io/wartam/smpn_4_majenang:latest
+    container_name: smpn4majenang
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD:?Set ADMIN_INITIAL_PASSWORD in .env}
+    volumes:
+      - smpn4_data:/app/data
+
+volumes:
+  smpn4_data:
