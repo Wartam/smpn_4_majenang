@@ -196,7 +196,7 @@ http://localhost:3000/admin.html
 
 Halaman admin dilindungi login session cookie. Peran yang disiapkan adalah Admin Utama (akses penuh), Admin Konten (berita, blog, dan media), Admin Akademik (profil dan informasi sekolah), serta Admin Layanan (pesan dan informasi kontak).
 
-Saat database pertama kali dibuat, semua akun contoh menggunakan password awal dari environment variable `ADMIN_INITIAL_PASSWORD`. Jika variable tersebut tidak diatur, password default development adalah `AdminSMPN4!2026`. Segera ubah password dan jangan gunakan default ini pada production.
+Kredensial awal akun admin diatur pada seed SQLite. Admin Utama menggunakan `adminweb@smpn04majenang.sch.id` dengan password `admin061`. Admin Konten menggunakan `konten@smpn04majenang.sch.id` dengan password `20331749`, sedangkan Admin Akademik menggunakan `akademik@smpn04majenang.sch.id` dengan password `20331749`. Admin Layanan menggunakan `web@smpn04majenang.sch.id` dan masih berstatus undangan. Segera ganti password tersebut pada production.
 
 Untuk development, salin `.env.example` menjadi `.env` dan isi password yang kuat:
 

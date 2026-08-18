@@ -91,8 +91,10 @@ db.run(`
 
 db.run(`
   INSERT OR IGNORE INTO school_profile (id, school_name, tagline, address, phone, email, founded_year, students, teachers, classrooms, vision, mission)
-  VALUES (1, 'SMP Negeri 4 Majenang', 'Melangkah bersama, meraih masa depan.', 'Jl. Raya Majenang–Cilacap, Majenang, Jawa Tengah 53257', '(0280) 621 234', 'info@smpn4majenang.sch.id', 2006, 527, 33, 18, 'Terwujudnya peserta didik yang beriman, berkarakter, berprestasi, berwawasan lingkungan, dan mampu beradaptasi dengan perkembangan zaman.', 'Menyelenggarakan pembelajaran yang aktif, kreatif, dan berpihak pada murid serta membangun budaya sekolah yang ramah, disiplin, dan kolaboratif.')
+  VALUES (1, 'SMP Negeri 4 Majenang', 'Melangkah bersama, meraih masa depan.', 'Jl. Raya Majenang– Sepatnunggal KM-7,Majenang 53257', '085154989537', 'web@smpn04majenang.sch.id', 2006, 3000, 33, 18, 'Terwujudnya peserta didik yang beriman, berkarakter, berprestasi, berwawasan lingkungan, dan mampu beradaptasi dengan perkembangan zaman.', 'Menyelenggarakan pembelajaran yang aktif, kreatif, dan berpihak pada murid serta membangun budaya sekolah yang ramah, disiplin, dan kolaboratif.')
 `)
+
+db.run(`UPDATE school_profile SET address = 'Jl. Raya Majenang– Sepatnunggal KM-7,Majenang 53257', phone = '085154989537', email = 'web@smpn04majenang.sch.id', students = 3000 WHERE id = 1`)
 
 const roleSeed = db.prepare(`
   INSERT OR IGNORE INTO roles (name, label, description, permissions)
@@ -123,10 +125,10 @@ const userSeed = db.prepare(`
 `)
 
 for (const user of [
-  ['Admin Utama', 'admin@smpn4majenang.sch.id', 'AR', 'owner', 'active'],
-  ['Nadia Fitri', 'nadia@smpn4majenang.sch.id', 'NF', 'editor', 'active'],
-  ['Dimas Saputra', 'dimas@smpn4majenang.sch.id', 'DS', 'academic', 'active'],
-  ['Lina Wati', 'lina@smpn4majenang.sch.id', 'LW', 'contact', 'pending'],
+  ['Admin Utama', 'adminweb@smpn04majenang.sch.id', 'AR', 'owner', 'active'],
+  ['Nadia Fitri', 'konten@smpn04majenang.sch.id', 'NF', 'editor', 'active'],
+  ['Dimas Saputra', 'akademik@smpn04majenang.sch.id', 'DS', 'academic', 'active'],
+  ['Lina Wati', 'web@smpn04majenang.sch.id', 'LW', 'contact', 'pending'],
 ] as const) {
   userSeed.run(...user)
 }
@@ -227,13 +229,31 @@ export function deletePost(id: number) {
 const postCount = db.query('SELECT COUNT(*) AS count FROM posts').get() as { count: number }
 if (postCount.count === 0) {
   const postSeed = db.prepare(`INSERT INTO posts (type, title, excerpt, category, status, author_id) VALUES (?, ?, ?, ?, ?, (SELECT id FROM admin_users WHERE email = ?))`)
-  postSeed.run('news', 'Tim Olimpiade Sains Raih Juara Kabupaten', 'Perjalanan membanggakan siswa-siswi terbaik kami dalam kompetisi sains tahun ini.', 'Prestasi', 'published', 'admin@smpn4majenang.sch.id')
-  postSeed.run('news', 'Gerakan Satu Siswa Satu Tanaman', 'Menumbuhkan kepedulian terhadap lingkungan dari kebiasaan sederhana.', 'Lingkungan', 'published', 'admin@smpn4majenang.sch.id')
-  postSeed.run('blog', 'Belajar bukan tentang menjadi paling pintar', 'Memaknai proses belajar sebagai perjalanan untuk terus bertumbuh.', 'Pendidikan', 'published', 'admin@smpn4majenang.sch.id')
+  postSeed.run('news', 'Tim Olimpiade Sains Raih Juara Kabupaten', 'Perjalanan membanggakan siswa-siswi terbaik kami dalam kompetisi sains tahun ini.', 'Prestasi', 'published', 'adminweb@smpn04majenang.sch.id')
+  postSeed.run('news', 'Gerakan Satu Siswa Satu Tanaman', 'Menumbuhkan kepedulian terhadap lingkungan dari kebiasaan sederhana.', 'Lingkungan', 'published', 'adminweb@smpn04majenang.sch.id')
+  postSeed.run('blog', 'Belajar bukan tentang menjadi paling pintar', 'Memaknai proses belajar sebagai perjalanan untuk terus bertumbuh.', 'Pendidikan', 'published', 'adminweb@smpn04majenang.sch.id')
 }
 
 export async function ensureInitialPasswords() {
-  const password = Bun.env.ADMIN_INITIAL_PASSWORD || 'AdminSMPN4!2026'
-  const hash = await Bun.password.hash(password, { algorithm: 'argon2id' })
-  db.query('UPDATE admin_users SET password_hash = ? WHERE password_hash IS NULL').run(hash)
+  const credentials = [
+    { oldEmail: 'admin@smpn4majenang.sch.id', email: 'adminweb@smpn04majenang.sch.id', password: 'admin061' },
+    { oldEmail: 'nadia@smpn4majenang.sch.id', email: 'konten@smpn04majenang.sch.id', password: '20331749' },
+    { oldEmail: 'dimas@smpn4majenang.sch.id', email: 'akademik@smpn04majenang.sch.id', password: '20331749' },
+    { oldEmail: 'lina@smpn4majenang.sch.id', email: 'web@smpn04majenang.sch.id', password: '20331749' },
+  ]
+  for (const credential of credentials) {
+    const hash = await Bun.password.hash(credential.password, { algorithm: 'argon2id' })
+    const oldUser = db.query('SELECT id FROM admin_users WHERE lower(email) = lower(?)').get(credential.oldEmail) as { id: number } | null
+    const newUser = db.query('SELECT id FROM admin_users WHERE lower(email) = lower(?)').get(credential.email) as { id: number } | null
+    if (oldUser && newUser && oldUser.id !== newUser.id) {
+      db.query('UPDATE posts SET author_id = ? WHERE author_id = ?').run(newUser.id, oldUser.id)
+      db.query('DELETE FROM admin_sessions WHERE user_id = ?').run(oldUser.id)
+      db.query('DELETE FROM admin_users WHERE id = ?').run(oldUser.id)
+      db.query('UPDATE admin_users SET password_hash = ? WHERE id = ?').run(hash, newUser.id)
+    } else if (oldUser) {
+      db.query('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?').run(credential.email, hash, oldUser.id)
+    } else {
+      db.query('UPDATE admin_users SET password_hash = ? WHERE lower(email) = lower(?) AND password_hash IS NULL').run(hash, credential.email)
+    }
+  }
 }

@@ -19,5 +19,6 @@ async function loadPublicProfile() {
   const valueTexts = document.querySelectorAll('.values-grid article p')
   if (valueTexts[0]) valueTexts[0].textContent = data.vision
   if (valueTexts[1]) valueTexts[1].textContent = data.mission
+  document.querySelectorAll('.current-year').forEach((element) => { element.textContent = new Date().getFullYear() })
 }
 loadPublicProfile().catch(() => {})
