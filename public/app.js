@@ -6,11 +6,22 @@ toggle?.addEventListener('click', () => {
 })
 document.querySelectorAll('.main-nav a').forEach((link) => link.addEventListener('click', () => nav.classList.remove('open')))
 const form = document.querySelector('.contact-form')
-form?.addEventListener('submit', (event) => {
+form?.addEventListener('submit', async (event) => {
   event.preventDefault()
   const status = form.querySelector('.form-status')
-  status.textContent = 'Terima kasih, pesan Anda sudah kami terima.'
-  form.reset()
+  const button = form.querySelector('button[type="submit"]')
+  button.disabled = true
+  try {
+    const response = await fetch('/api/public/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(form))) })
+    const result = await response.json()
+    if (!response.ok) throw new Error(result.error || 'Pesan gagal dikirim')
+    status.textContent = 'Terima kasih, pesan Anda sudah kami terima.'
+    form.reset()
+  } catch (error) {
+    status.textContent = error.message
+  } finally {
+    button.disabled = false
+  }
 })
 const links = document.querySelectorAll('.main-nav a')
 const sections = document.querySelectorAll('main section[id]')

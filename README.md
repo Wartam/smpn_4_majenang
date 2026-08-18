@@ -74,6 +74,19 @@ PORT=8080 bun run start
 │   ├── admin.html    # Dashboard admin dan pembagian peran
 │   ├── admin.css     # Gaya dashboard admin
 │   ├── admin.js      # Interaksi dashboard admin
+│   ├── content.html  # Halaman CRUD berita dan blog
+│   ├── content.css   # Gaya halaman pengelolaan konten
+│   ├── content.js    # Interaksi CRUD konten
+│   ├── users.html     # Halaman kelola pengguna admin
+│   ├── users.css      # Gaya halaman pengguna admin
+│   ├── users.js       # Interaksi kelola pengguna
+│   ├── school-profile.html # Halaman edit profil sekolah
+│   ├── school-profile.css   # Gaya halaman profil admin
+│   ├── school-profile.js    # Interaksi edit profil
+│   ├── site-profile.js      # Sinkronisasi profil ke website publik
+│   ├── messages.html        # Inbox pesan kontak
+│   ├── messages.css         # Gaya inbox pesan
+│   ├── messages.js          # Interaksi inbox pesan
 │   ├── login.html    # Halaman login admin
 │   ├── login.js      # Proses login admin
 │   ├── profil.html   # Halaman profil sekolah
@@ -93,6 +106,20 @@ Endpoint yang tersedia:
 ```text
 GET /api/admin/users  # Daftar admin dan perannya
 GET /api/admin/roles  # Daftar peran dan permission
+GET /api/admin/posts  # Daftar berita dan blog
+POST /api/admin/posts # Membuat berita atau blog
+PUT /api/admin/posts/:id # Mengubah konten
+DELETE /api/admin/posts/:id # Menghapus konten
+POST /api/admin/users # Menambahkan admin
+PUT /api/admin/users/:id # Mengubah admin
+DELETE /api/admin/users/:id # Menghapus admin selain Admin Utama
+GET /api/public/profile # Data profil untuk website publik
+GET /api/admin/profile # Membaca profil sekolah
+PUT /api/admin/profile # Mengubah profil sekolah
+POST /api/public/messages # Menyimpan pesan dari form kontak
+GET /api/admin/messages # Membaca inbox pesan
+PUT /api/admin/messages/:id/read # Menandai pesan sudah dibaca
+DELETE /api/admin/messages/:id # Menghapus pesan
 ```
 
 Folder `data/` sengaja tidak dilacak Git karena berisi database lokal. Salin database tersebut jika ingin memindahkan data development. Untuk production, tambahkan autentikasi/login dan validasi permission di server sebelum endpoint admin dibuka.

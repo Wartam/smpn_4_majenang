@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kelola Konten — SMPN 4 Majenang</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" /><link rel="stylesheet" href="/admin.css" /><link rel="stylesheet" href="/content.css" />
+  </head>
+  <body>
+    <div class="content-shell"><header class="admin-topbar"><a class="content-back" href="/admin">←</a><div class="breadcrumbs"><span>Panel admin</span><b>/</b><strong>Konten website</strong></div><div class="top-actions"><a class="view-site" href="/" target="_blank">Lihat website ↗</a><div class="top-avatar">AR</div></div></header>
+      <main class="content-main"><div class="page-heading"><div><p class="admin-kicker">PENGELOLAAN WEBSITE</p><h1>Konten website</h1><p class="heading-desc">Buat dan kelola berita serta artikel blog sekolah.</p></div><button class="admin-button primary" id="new-post">+ Buat konten</button></div>
+        <section class="content-toolbar"><div class="content-tabs"><button class="tab active" data-filter="all">Semua</button><button class="tab" data-filter="news">Berita</button><button class="tab" data-filter="blog">Blog</button></div><div class="content-search"><span>⌕</span><input id="search" type="search" placeholder="Cari judul konten..." /></div></section>
+        <section class="panel content-panel"><div class="content-table" id="post-list"><div class="empty-state">Memuat konten...</div></div></section>
+      </main>
+    </div>
+    <div class="modal-backdrop" id="post-modal" hidden><form class="post-form" id="post-form"><div class="modal-heading"><div><p class="admin-kicker">EDITOR KONTEN</p><h2 id="form-title">Buat konten baru</h2></div><button type="button" class="modal-close" id="close-modal">×</button></div><input type="hidden" name="id" /><label>Jenis konten<select name="type"><option value="news">Berita</option><option value="blog">Blog</option></select></label><label>Judul<input name="title" required maxlength="140" placeholder="Masukkan judul konten" /></label><label>Kategori<input name="category" maxlength="40" placeholder="Contoh: Prestasi" /></label><label>Ringkasan<textarea name="excerpt" rows="4" placeholder="Tulis ringkasan singkat..." ></textarea></label><label>Status<select name="status"><option value="draft">Draft</option><option value="published">Terbitkan</option></select></label><p class="form-error" id="form-error"></p><div class="form-actions"><button type="button" class="admin-button outline" id="cancel-form">Batal</button><button type="submit" class="admin-button primary">Simpan konten</button></div></form></div>
+    <div class="toast" role="status"></div><script src="/content.js"></script>
+  </body>
+</html>
