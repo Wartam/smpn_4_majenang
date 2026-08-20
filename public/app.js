@@ -1,4 +1,5 @@
 const toggle = document.querySelector('.menu-toggle')
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
 const nav = document.querySelector('.main-nav')
 toggle?.addEventListener('click', () => {
   const open = nav.classList.toggle('open')
