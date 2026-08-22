@@ -133,6 +133,15 @@ for (const user of [
   userSeed.run(...user)
 }
 
+// Keep existing deployments in sync when account display names change.
+for (const user of [
+  ['Admin Konten', 'AK', 'konten@smpn04majenang.sch.id'],
+  ['Admin Akademik', 'AA', 'akademik@smpn04majenang.sch.id'],
+  ['Admin Layanan', 'AL', 'web@smpn04majenang.sch.id'],
+] as const) {
+  db.query('UPDATE admin_users SET name = ?, initials = ? WHERE lower(email) = lower(?)').run(...user)
+}
+
 export function listAdminUsers() {
   return db.query(`
     SELECT
