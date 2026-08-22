@@ -126,9 +126,9 @@ const userSeed = db.prepare(`
 
 for (const user of [
   ['Admin Utama', 'adminweb@smpn04majenang.sch.id', 'AR', 'owner', 'active'],
-  ['Nadia Fitri', 'konten@smpn04majenang.sch.id', 'NF', 'editor', 'active'],
-  ['Dimas Saputra', 'akademik@smpn04majenang.sch.id', 'DS', 'academic', 'active'],
-  ['Lina Wati', 'web@smpn04majenang.sch.id', 'LW', 'contact', 'pending'],
+  ['Admin Konten', 'konten@smpn04majenang.sch.id', 'AK', 'editor', 'active'],
+  ['Admin Akademik', 'akademik@smpn04majenang.sch.id', 'AA', 'academic', 'active'],
+  ['Admin Layanan', 'web@smpn04majenang.sch.id', 'AL', 'contact', 'pending'],
 ] as const) {
   userSeed.run(...user)
 }
