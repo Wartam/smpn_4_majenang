@@ -47,7 +47,7 @@ export function requirePermission(permission: string) {
   return createMiddleware(async (c, next) => {
     const user = c.get('user') as SessionUser | undefined
     if (!user) return c.json({ error: 'Autentikasi diperlukan' }, 401)
-    if (!user.permissions.includes('*') && !user.permissions.includes(permission)) {
+    if (user.role !== 'owner' && !user.permissions.includes('*') && !user.permissions.includes(permission)) {
       return c.json({ error: 'Anda tidak memiliki izin untuk tindakan ini' }, 403)
     }
     await next()
