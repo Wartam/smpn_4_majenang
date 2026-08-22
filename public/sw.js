@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smpn4-majenang-v3'
+const CACHE_NAME = 'smpn4-majenang-v4'
 const APP_SHELL = [
   '/',
   '/profil.html',
@@ -28,7 +28,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return
-  if (event.request.destination === 'document') {
+  if (event.request.destination === 'document' || new URL(event.request.url).pathname.startsWith('/api/public/')) {
     event.respondWith(
       fetch(event.request).then((response) => {
         const copy = response.clone()
