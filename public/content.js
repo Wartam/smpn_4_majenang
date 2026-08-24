@@ -1,4 +1,5 @@
 const list = document.querySelector('#post-list')
+fetch('/api/auth/me').then((response) => response.ok ? response.json() : null).then((result) => { if (result?.data) document.querySelector('.top-avatar').textContent = result.data.initials }).catch(() => {})
 const modal = document.querySelector('#post-modal')
 const form = document.querySelector('#post-form')
 const error = document.querySelector('#form-error')
@@ -19,7 +20,7 @@ function renderPosts() {
   list.querySelectorAll('[data-delete]').forEach((button) => button.addEventListener('click', () => removePost(Number(button.dataset.delete))))
 }
 
-async function loadPosts() { const response = await fetch('/api/admin/posts'); if (response.status === 401) return window.location.href = '/login.html'; if (!response.ok) throw new Error('Gagal memuat konten'); posts = (await response.json()).data; renderPosts() }
+async function loadPosts() { const response = await fetch('/api/admin/posts'); if (response.status === 401) return window.location.href = '/login.html'; if (response.status === 403) throw new Error('Akun ini tidak memiliki izin mengelola konten. Gunakan Admin Konten atau Admin Utama.'); if (!response.ok) throw new Error('Gagal memuat konten'); posts = (await response.json()).data; renderPosts() }
 function openForm(post) { editingId = post?.id || null; form.reset(); form.elements.id.value = post?.id || ''; form.elements.type.value = post?.type || 'news'; form.elements.title.value = post?.title || ''; form.elements.category.value = post?.category || ''; form.elements.excerpt.value = post?.excerpt || ''; form.elements.status.value = post?.status || 'draft'; document.querySelector('#form-title').textContent = post ? 'Edit konten' : 'Buat konten baru'; error.textContent = ''; modal.hidden = false }
 function closeForm() { modal.hidden = true; editingId = null }
 async function removePost(id) { if (!confirm('Hapus konten ini?')) return; const response = await fetch(`/api/admin/posts/${id}`, { method: 'DELETE' }); if (!response.ok) return showToast('Anda tidak memiliki izin menghapus konten'); posts = posts.filter((post) => post.id !== id); renderPosts(); showToast('Konten berhasil dihapus') }
@@ -29,5 +30,5 @@ document.querySelector('#close-modal').addEventListener('click', closeForm)
 document.querySelector('#cancel-form').addEventListener('click', closeForm)
 document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => { document.querySelectorAll('.tab').forEach((item) => item.classList.remove('active')); tab.classList.add('active'); filter = tab.dataset.filter; renderPosts() }))
 document.querySelector('#search').addEventListener('input', renderPosts)
-form.addEventListener('submit', async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(form)); const url = editingId ? `/api/admin/posts/${editingId}` : '/api/admin/posts'; const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); const result = await response.json(); if (!response.ok) { error.textContent = result.error || 'Gagal menyimpan konten'; return } closeForm(); await loadPosts(); showToast('Konten berhasil disimpan') })
-loadPosts().catch(() => { list.innerHTML = '<div class="empty-state">Gagal memuat konten.</div>' })
+form.addEventListener('submit', async (event) => { event.preventDefault(); const values = Object.fromEntries(new FormData(form)); const url = editingId ? `/api/admin/posts/${editingId}` : '/api/admin/posts'; try { const response = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); const result = await response.json(); if (!response.ok) { error.textContent = result.error || 'Gagal menyimpan konten'; return } closeForm(); await loadPosts(); showToast('Konten berhasil disimpan') } catch (exception) { error.textContent = exception.message || 'Server tidak dapat dihubungi' } })
+loadPosts().catch((exception) => { list.innerHTML = `<div class="empty-state">${escapeHtml(exception.message || 'Gagal memuat konten.')}</div>` })

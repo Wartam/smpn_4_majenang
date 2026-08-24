@@ -1,4 +1,5 @@
 const list = document.querySelector('#message-list')
+fetch('/api/auth/me').then((response) => response.ok ? response.json() : null).then((result) => { if (result?.data) document.querySelector('.top-avatar').textContent = result.data.initials }).catch(() => {})
 const summary = document.querySelector('#message-summary')
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char])
 const dateLabel = (value) => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(String(value).replace(' ', 'T') + 'Z'))

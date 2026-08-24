@@ -6,6 +6,12 @@ import { login, logout, requireAuth, requirePermission, setSession } from './aut
 
 const app = new Hono()
 
+app.onError((error, c) => {
+  console.error(error)
+  if (c.req.path.startsWith('/api/')) return c.json({ error: 'Terjadi kesalahan server. Silakan coba lagi.' }, 500)
+  return c.text('Terjadi kesalahan server.', 500)
+})
+
 app.post('/api/auth/login', async (c) => {
   const body = await c.req.json<{ email?: string; password?: string }>()
   if (!body.email || !body.password) return c.json({ error: 'Email dan password wajib diisi' }, 400)

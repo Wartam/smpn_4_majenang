@@ -21,6 +21,10 @@ async function loadCurrentUser() {
   document.querySelectorAll('[data-current-name]').forEach((element) => { element.textContent = user.name })
   document.querySelectorAll('[data-current-initials]').forEach((element) => { element.textContent = user.initials })
   document.querySelectorAll('[data-current-role]').forEach((element) => { element.textContent = user.role_label })
+  document.querySelectorAll('[data-permission]').forEach((element) => {
+    const allowed = user.role === 'owner' || user.permissions.includes('*') || user.permissions.includes(element.dataset.permission)
+    if (!allowed) element.hidden = true
+  })
 }
 
 const roleClasses = { owner: 'owner', editor: 'editor', academic: 'academic', contact: 'contact' }

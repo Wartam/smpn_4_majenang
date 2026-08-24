@@ -18,13 +18,13 @@
         <nav class="admin-nav" aria-label="Menu admin">
           <p class="nav-label">MENU UTAMA</p>
           <a class="selected" href="#dashboard"><span>▦</span> Ringkasan</a>
-          <a href="/admin/konten"><span>▤</span> Konten website <b class="nav-count">12</b></a>
-          <a href="/admin/konten"><span>◉</span> Berita & blog</a>
-          <a href="/admin/pesan"><span>♧</span> Pesan masuk</a>
-          <a href="/admin/pengguna"><span>♙</span> Pengguna & peran</a>
+          <a href="/admin/konten" data-permission="content:read"><span>▤</span> Konten website <b class="nav-count">12</b></a>
+          <a href="/admin/konten" data-permission="content:read"><span>◉</span> Berita & blog</a>
+          <a href="/admin/pesan" data-permission="messages:read"><span>♧</span> Pesan masuk</a>
+          <a href="/admin/pengguna" data-permission="users:read"><span>♙</span> Pengguna & peran</a>
           <a href="#aktivitas"><span>◷</span> Aktivitas</a>
           <p class="nav-label second">PENGATURAN</p>
-          <a href="/admin/profil"><span>⚙</span> Pengaturan sekolah</a>
+          <a href="/admin/profil" data-permission="profile:read"><span>⚙</span> Pengaturan sekolah</a>
           <a href="/"><span>↗</span> Lihat website</a>
         </nav>
         <div class="sidebar-user"><div class="user-avatar" data-current-initials>AR</div><div><b data-current-name>Admin Utama</b><small data-current-role>Administrator</small></div><button id="logout-button" aria-label="Keluar">↪</button></div>

@@ -1,4 +1,5 @@
 const form = document.querySelector('#profile-form')
+fetch('/api/auth/me').then((response) => response.ok ? response.json() : null).then((result) => { if (result?.data) document.querySelector('.top-avatar').textContent = result.data.initials }).catch(() => {})
 const error = document.querySelector('#profile-error')
 const savedAt = document.querySelector('#saved-at')
 const toast = document.querySelector('.toast')
