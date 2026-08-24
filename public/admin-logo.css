@@ -1,0 +1,11 @@
+.admin-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex: none;
+}
+
+.login-brand .admin-logo {
+  width: 42px;
+  height: 42px;
+}
