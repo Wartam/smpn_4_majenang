@@ -14,6 +14,15 @@ document.querySelectorAll('[data-toast]').forEach((button) => button.addEventLis
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2600)
 }))
 
+async function loadCurrentUser() {
+  const response = await fetch('/api/auth/me')
+  if (!response.ok) return
+  const { data: user } = await response.json()
+  document.querySelectorAll('[data-current-name]').forEach((element) => { element.textContent = user.name })
+  document.querySelectorAll('[data-current-initials]').forEach((element) => { element.textContent = user.initials })
+  document.querySelectorAll('[data-current-role]').forEach((element) => { element.textContent = user.role_label })
+}
+
 const roleClasses = { owner: 'owner', editor: 'editor', academic: 'academic', contact: 'contact' }
 const avatarClasses = { owner: 'blue-bg', editor: 'orange', academic: 'green-bg', contact: 'purple-bg' }
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char])
@@ -36,3 +45,4 @@ async function loadAdminUsers() {
 }
 
 loadAdminUsers()
+loadCurrentUser().catch(() => {})
