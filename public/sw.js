@@ -7,11 +7,10 @@ const APP_SHELL = [
   '/brand.css',
   '/app.js',
   '/site-profile.js',
-  '/logo-smpn4.jpg',
+  '/logo-smpn4-transparan.png',
   '/kepala-sekolah.jpg',
   '/profile-principal.css',
-  '/manifest.webmanifest',
-  '/pwa-icon.svg'
+  '/manifest.webmanifest'
 ]
 
 self.addEventListener('install', (event) => {
