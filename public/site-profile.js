@@ -7,7 +7,6 @@ async function loadPublicProfile() {
   document.querySelectorAll('.stats strong')[0]?.replaceChildren(String(data.founded_year))
   document.querySelectorAll('.stats strong')[1]?.replaceChildren(String(data.teachers))
   document.querySelectorAll('.stats strong')[2]?.replaceChildren(String(data.classrooms))
-  fetch('/api/public/feedback/stats').then((response) => response.ok ? response.json() : null).then((result) => { if (result?.data) document.querySelector('#visitor-count')?.replaceChildren(String(result.data.count)) }).catch(() => {})
   const contact = document.querySelectorAll('.contact-details p')
   if (contact[0]) contact[0].textContent = `Alamat\n${data.address}`
   if (contact[1]) contact[1].textContent = `Telepon\n${data.phone} · ${data.email}`
@@ -23,3 +22,24 @@ async function loadPublicProfile() {
   document.querySelectorAll('.current-year').forEach((element) => { element.textContent = new Date().getFullYear() })
 }
 loadPublicProfile().catch(() => {})
+
+async function loadVisitorCount() {
+  try {
+    const response = await fetch('/api/public/feedback/stats', {
+      cache: 'no-store'
+    })
+
+    if (!response.ok) return
+
+    const result = await response.json()
+    const count = document.querySelector('#visitor-count')
+
+    if (count && result?.data?.count !== undefined) {
+      count.textContent = String(result.data.count)
+    }
+  } catch (error) {
+    console.error('Gagal memuat jumlah masukan:', error)
+  }
+}
+
+loadVisitorCount()
