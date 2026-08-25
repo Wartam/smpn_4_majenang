@@ -71,8 +71,8 @@ app.put('/api/admin/profile', requireAuth, requirePermission('profile:update'), 
   if (required.some((key) => !body[key]?.trim())) return c.json({ error: 'Semua data profil wajib diisi' }, 400)
   const numbers = ['foundedYear', 'students', 'teachers', 'classrooms'].map((key) => Number(body[key]))
   if (numbers.some((value) => !Number.isInteger(value) || value < 0)) return c.json({ error: 'Data angka profil tidak valid' }, 400)
-  const current = getSchoolProfile() as { history?: string; organization?: string; facilities?: string } | null
-  return c.json({ data: updateSchoolProfile({ schoolName: body.schoolName.trim(), tagline: body.tagline.trim(), address: body.address.trim(), phone: body.phone.trim(), email: body.email.trim(), foundedYear: numbers[0], students: numbers[1], teachers: numbers[2], classrooms: numbers[3], vision: body.vision.trim(), mission: body.mission.trim(), history: body.history?.trim() || current?.history || '', organization: body.organization?.trim() || current?.organization || '', facilities: body.facilities?.trim() || current?.facilities || '' }) })
+  const current = getSchoolProfile() as { history?: string; organization?: string; facilities?: string; principal_message?: string } | null
+  return c.json({ data: updateSchoolProfile({ schoolName: body.schoolName.trim(), tagline: body.tagline.trim(), address: body.address.trim(), phone: body.phone.trim(), email: body.email.trim(), foundedYear: numbers[0], students: numbers[1], teachers: numbers[2], classrooms: numbers[3], vision: body.vision.trim(), mission: body.mission.trim(), history: body.history?.trim() || current?.history || '', organization: body.organization?.trim() || current?.organization || '', facilities: body.facilities?.trim() || current?.facilities || '', principalMessage: body.principalMessage?.trim() || current?.principal_message || '' }) })
 })
 app.get('/api/admin/messages', requireAuth, requirePermission('messages:read'), (c) => c.json({ data: listMessages() }))
 app.put('/api/admin/messages/:id/read', requireAuth, requirePermission('messages:update'), (c) => markMessageRead(Number(c.req.param('id'))) ? c.json({ message: 'Pesan ditandai sudah dibaca' }) : c.json({ error: 'Pesan tidak ditemukan' }, 404))
@@ -105,7 +105,7 @@ app.get('/admin/pengguna', requireAuth, async (c) => c.html(await Bun.file('./pu
 app.get('/admin/profil', requireAuth, async (c) => c.html(await Bun.file('./public/school-profile.html').text()))
 app.get('/admin/pesan', requireAuth, async (c) => c.html(await Bun.file('./public/messages.html').text()))
 app.get('/admin/pengunjung', requireAuth, async (c) => c.html(await Bun.file('./public/visitors.html').text()))
-for (const path of ['/profil/sejarah', '/profil/visi-misi', '/profil/struktur', '/profil/sarpras']) {
+for (const path of ['/profil/sambutan', '/profil/sejarah', '/profil/visi-misi', '/profil/struktur', '/profil/sarpras']) {
   app.get(path, async (c) => c.html(await Bun.file('./public/profile-section.html').text()))
 }
 app.use('/*', serveStatic({ root: './public' }))
