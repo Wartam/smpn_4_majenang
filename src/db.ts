@@ -74,9 +74,20 @@ db.run(`
     classrooms INTEGER NOT NULL,
     vision TEXT NOT NULL,
     mission TEXT NOT NULL,
+    history TEXT NOT NULL DEFAULT '',
+    organization TEXT NOT NULL DEFAULT '',
+    facilities TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `)
+
+for (const column of ['history', 'organization', 'facilities']) {
+  try {
+    db.run(`ALTER TABLE school_profile ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`)
+  } catch {
+    // Column already exists on databases created by a previous version.
+  }
+}
 
 db.run(`
   CREATE TABLE IF NOT EXISTS contact_messages (
@@ -107,6 +118,12 @@ db.run(`
 `)
 
 db.run(`UPDATE school_profile SET address = 'Jl. Raya Majenang– Sepatnunggal KM-7,Majenang 53257', phone = '085154989537', email = 'web@smpn04majenang.sch.id', students = 3000 WHERE id = 1`)
+
+db.query(`UPDATE school_profile SET history = CASE WHEN history = '' THEN ? ELSE history END, organization = CASE WHEN organization = '' THEN ? ELSE organization END, facilities = CASE WHEN facilities = '' THEN ? ELSE facilities END WHERE id = 1 AND (history = '' OR organization = '' OR facilities = '')`).run(
+  'SMP Negeri 4 Majenang hadir sebagai bagian penting dari perjalanan pendidikan masyarakat Majenang. Sejak berdiri pada 2006, sekolah terus berkembang dengan semangat menghadirkan pembelajaran yang bermakna, aman, dan relevan.\n\nDengan dukungan guru, orang tua, dan masyarakat, sekolah berkomitmen menjaga tradisi baik sekaligus membuka ruang untuk inovasi.',
+  'Pengelolaan sekolah dilaksanakan secara kolaboratif oleh kepala sekolah, wakil kepala sekolah, guru, tenaga kependidikan, komite sekolah, dan seluruh warga sekolah.\n\nKepala Sekolah: Raden Sri Pramana Budiarsa, S.Pd., M.Pd.\n\nWakil Kepala Sekolah: Bidang kurikulum, kesiswaan, sarana prasarana, dan hubungan masyarakat.',
+  'Perpustakaan: ruang baca dengan koleksi yang terus berkembang.\n\nLaboratorium IPA: tempat menguji rasa ingin tahu menjadi penemuan.\n\nLapangan olahraga: ruang bergerak, berlatih, dan membangun sportivitas.\n\nRuang pembelajaran: fasilitas kelas yang mendukung pembelajaran aktif dan kolaboratif.'
+)
 
 const roleSeed = db.prepare(`
   INSERT OR IGNORE INTO roles (name, label, description, permissions)
@@ -169,7 +186,7 @@ export function listAdminUsers() {
     FROM admin_users
     JOIN roles ON roles.id = admin_users.role_id
     ORDER BY admin_users.id ASC
-  `).all().map((user) => ({
+  `).all().map((user: any) => ({
     ...user,
     permissions: JSON.parse(String(user.permissions)),
   }))
@@ -197,8 +214,8 @@ export function getSchoolProfile() {
   return db.query('SELECT * FROM school_profile WHERE id = 1').get()
 }
 
-export function updateSchoolProfile(input: { schoolName: string; tagline: string; address: string; phone: string; email: string; foundedYear: number; students: number; teachers: number; classrooms: number; vision: string; mission: string }) {
-  db.query(`UPDATE school_profile SET school_name = ?, tagline = ?, address = ?, phone = ?, email = ?, founded_year = ?, students = ?, teachers = ?, classrooms = ?, vision = ?, mission = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1`).run(input.schoolName, input.tagline, input.address, input.phone, input.email, input.foundedYear, input.students, input.teachers, input.classrooms, input.vision, input.mission)
+export function updateSchoolProfile(input: { schoolName: string; tagline: string; address: string; phone: string; email: string; foundedYear: number; students: number; teachers: number; classrooms: number; vision: string; mission: string; history: string; organization: string; facilities: string }) {
+  db.query(`UPDATE school_profile SET school_name = ?, tagline = ?, address = ?, phone = ?, email = ?, founded_year = ?, students = ?, teachers = ?, classrooms = ?, vision = ?, mission = ?, history = ?, organization = ?, facilities = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1`).run(input.schoolName, input.tagline, input.address, input.phone, input.email, input.foundedYear, input.students, input.teachers, input.classrooms, input.vision, input.mission, input.history, input.organization, input.facilities)
   return getSchoolProfile()
 }
 
@@ -241,7 +258,7 @@ export function countVisitorFeedback() {
 }
 
 export function listRoles() {
-  return db.query('SELECT name, label, description, permissions FROM roles ORDER BY id ASC').all().map((role) => ({
+  return db.query('SELECT name, label, description, permissions FROM roles ORDER BY id ASC').all().map((role: any) => ({
     ...role,
     permissions: JSON.parse(String(role.permissions)),
   }))

@@ -33,7 +33,7 @@ export function currentUser(c: any) {
   return findUserBySession(getCookie(c, SESSION_COOKIE))
 }
 
-export const requireAuth = createMiddleware(async (c, next) => {
+export const requireAuth: any = createMiddleware((async (c, next) => {
   const user = currentUser(c)
   if (!user) {
     if (c.req.path.startsWith('/api/')) return c.json({ error: 'Autentikasi diperlukan' }, 401)
@@ -41,17 +41,17 @@ export const requireAuth = createMiddleware(async (c, next) => {
   }
   c.set('user', user)
   await next()
-})
+}) as any)
 
 export function requirePermission(permission: string) {
-  return createMiddleware(async (c, next) => {
+  return createMiddleware((async (c, next) => {
     const user = c.get('user') as SessionUser | undefined
     if (!user) return c.json({ error: 'Autentikasi diperlukan' }, 401)
     if (user.role !== 'owner' && !user.permissions.includes('*') && !user.permissions.includes(permission)) {
       return c.json({ error: 'Anda tidak memiliki izin untuk tindakan ini' }, 403)
     }
     await next()
-  })
+  }) as any)
 }
 
 export async function login(email: string, password: string) {

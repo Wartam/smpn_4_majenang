@@ -36,7 +36,7 @@ app.post('/api/public/feedback', async (c) => {
   return c.json({ data: createVisitorFeedback(body.name.trim(), body.contact?.trim() || '', body.type as 'comment' | 'suggestion' | 'feedback', body.message.trim()) }, 201)
 })
 app.post('/api/auth/logout', requireAuth, (c) => { logout(c); return c.json({ message: 'Logout berhasil' }) })
-app.get('/api/auth/me', requireAuth, (c) => c.json({ data: c.get('user') }))
+app.get('/api/auth/me', requireAuth, (c) => c.json({ data: (c as any).get('user') }))
 app.get('/api/admin/users', requireAuth, requirePermission('users:read'), (c) => c.json({ data: listAdminUsers() }))
 app.post('/api/admin/users', requireAuth, requirePermission('users:create'), async (c) => {
   const body = await c.req.json<{ name?: string; email?: string; role?: string; status?: string; password?: string }>()
@@ -71,7 +71,8 @@ app.put('/api/admin/profile', requireAuth, requirePermission('profile:update'), 
   if (required.some((key) => !body[key]?.trim())) return c.json({ error: 'Semua data profil wajib diisi' }, 400)
   const numbers = ['foundedYear', 'students', 'teachers', 'classrooms'].map((key) => Number(body[key]))
   if (numbers.some((value) => !Number.isInteger(value) || value < 0)) return c.json({ error: 'Data angka profil tidak valid' }, 400)
-  return c.json({ data: updateSchoolProfile({ schoolName: body.schoolName.trim(), tagline: body.tagline.trim(), address: body.address.trim(), phone: body.phone.trim(), email: body.email.trim(), foundedYear: numbers[0], students: numbers[1], teachers: numbers[2], classrooms: numbers[3], vision: body.vision.trim(), mission: body.mission.trim() }) })
+  const current = getSchoolProfile() as { history?: string; organization?: string; facilities?: string } | null
+  return c.json({ data: updateSchoolProfile({ schoolName: body.schoolName.trim(), tagline: body.tagline.trim(), address: body.address.trim(), phone: body.phone.trim(), email: body.email.trim(), foundedYear: numbers[0], students: numbers[1], teachers: numbers[2], classrooms: numbers[3], vision: body.vision.trim(), mission: body.mission.trim(), history: body.history?.trim() || current?.history || '', organization: body.organization?.trim() || current?.organization || '', facilities: body.facilities?.trim() || current?.facilities || '' }) })
 })
 app.get('/api/admin/messages', requireAuth, requirePermission('messages:read'), (c) => c.json({ data: listMessages() }))
 app.put('/api/admin/messages/:id/read', requireAuth, requirePermission('messages:update'), (c) => markMessageRead(Number(c.req.param('id'))) ? c.json({ message: 'Pesan ditandai sudah dibaca' }) : c.json({ error: 'Pesan tidak ditemukan' }, 404))
@@ -84,7 +85,7 @@ app.post('/api/admin/posts', requireAuth, requirePermission('content:create'), a
   const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; category?: string; status?: string }>()
   if (!['news', 'blog'].includes(body.type || '') || !body.title?.trim()) return c.json({ error: 'Jenis konten dan judul wajib diisi' }, 400)
   if (body.status && !['draft', 'published'].includes(body.status)) return c.json({ error: 'Status konten tidak valid' }, 400)
-  const user = c.get('user') as { id: number }
+  const user = (c as any).get('user') as { id: number }
   const post = createPost({ type: body.type as 'news' | 'blog', title: body.title.trim(), excerpt: body.excerpt?.trim() || '', category: body.category?.trim() || 'Umum', status: (body.status as 'draft' | 'published') || 'draft', authorId: user.id })
   return c.json({ data: post }, 201)
 })
@@ -104,6 +105,9 @@ app.get('/admin/pengguna', requireAuth, async (c) => c.html(await Bun.file('./pu
 app.get('/admin/profil', requireAuth, async (c) => c.html(await Bun.file('./public/school-profile.html').text()))
 app.get('/admin/pesan', requireAuth, async (c) => c.html(await Bun.file('./public/messages.html').text()))
 app.get('/admin/pengunjung', requireAuth, async (c) => c.html(await Bun.file('./public/visitors.html').text()))
+for (const path of ['/profil/sejarah', '/profil/visi-misi', '/profil/struktur', '/profil/sarpras']) {
+  app.get(path, async (c) => c.html(await Bun.file('./public/profile-section.html').text()))
+}
 app.use('/*', serveStatic({ root: './public' }))
 app.get('/', serveStatic({ path: './public/index.html' }))
 app.get('/profil', serveStatic({ path: './public/profil.html' }))

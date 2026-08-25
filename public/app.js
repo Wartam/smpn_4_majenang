@@ -1,11 +1,24 @@
 const toggle = document.querySelector('.menu-toggle')
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {}))
 const nav = document.querySelector('.main-nav')
+const closeDropdowns = () => document.querySelectorAll('.nav-dropdown').forEach((dropdown) => {
+  dropdown.classList.remove('open')
+  dropdown.querySelector('.nav-dropdown-toggle')?.setAttribute('aria-expanded', 'false')
+})
 toggle?.addEventListener('click', () => {
   const open = nav.classList.toggle('open')
   toggle.setAttribute('aria-expanded', String(open))
+  if (!open) closeDropdowns()
 })
-document.querySelectorAll('.main-nav a').forEach((link) => link.addEventListener('click', () => nav.classList.remove('open')))
+document.querySelectorAll('.main-nav a').forEach((link) => link.addEventListener('click', () => {
+  nav.classList.remove('open')
+  closeDropdowns()
+}))
+document.querySelectorAll('.nav-dropdown-toggle').forEach((button) => button.addEventListener('click', () => {
+  const dropdown = button.closest('.nav-dropdown')
+  const open = dropdown.classList.toggle('open')
+  button.setAttribute('aria-expanded', String(open))
+}))
 const form = document.querySelector('.contact-form:not(.visitor-form)')
 form?.addEventListener('submit', async (event) => {
   event.preventDefault()
