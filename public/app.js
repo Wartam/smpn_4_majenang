@@ -6,7 +6,7 @@ toggle?.addEventListener('click', () => {
   toggle.setAttribute('aria-expanded', String(open))
 })
 document.querySelectorAll('.main-nav a').forEach((link) => link.addEventListener('click', () => nav.classList.remove('open')))
-const form = document.querySelector('.contact-form')
+const form = document.querySelector('.contact-form:not(.visitor-form)')
 form?.addEventListener('submit', async (event) => {
   event.preventDefault()
   const status = form.querySelector('.form-status')
@@ -23,6 +23,22 @@ form?.addEventListener('submit', async (event) => {
   } finally {
     button.disabled = false
   }
+})
+const visitorForm = document.querySelector('.visitor-form')
+visitorForm?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const status = visitorForm.querySelector('.form-status')
+  const button = visitorForm.querySelector('button[type="submit"]')
+  button.disabled = true
+  try {
+    const response = await fetch('/api/public/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(visitorForm))) })
+    const result = await response.json()
+    if (!response.ok) throw new Error(result.error || 'Masukan gagal dikirim')
+    status.textContent = 'Terima kasih, masukan Anda sudah kami terima.'
+    visitorForm.reset()
+    const count = document.querySelector('#visitor-count')
+    if (count) count.textContent = String(Number(count.textContent || 0) + 1)
+  } catch (error) { status.textContent = error.message } finally { button.disabled = false }
 })
 const links = document.querySelectorAll('.main-nav a')
 const sections = document.querySelectorAll('main section[id]')

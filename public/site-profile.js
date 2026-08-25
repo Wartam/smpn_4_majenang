@@ -7,6 +7,7 @@ async function loadPublicProfile() {
   document.querySelectorAll('.stats strong')[0]?.replaceChildren(String(data.founded_year))
   document.querySelectorAll('.stats strong')[1]?.replaceChildren(String(data.teachers))
   document.querySelectorAll('.stats strong')[2]?.replaceChildren(String(data.classrooms))
+  fetch('/api/public/feedback/stats').then((response) => response.ok ? response.json() : null).then((result) => { if (result?.data) document.querySelector('#visitor-count')?.replaceChildren(String(result.data.count)) }).catch(() => {})
   const contact = document.querySelectorAll('.contact-details p')
   if (contact[0]) contact[0].textContent = `Alamat\n${data.address}`
   if (contact[1]) contact[1].textContent = `Telepon\n${data.phone} · ${data.email}`

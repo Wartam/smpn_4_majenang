@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
-import { createAdminUser, createMessage, createPost, deleteAdminUser, deleteMessage, deletePost, getSchoolProfile, listAdminUsers, listMessages, listPosts, listRoles, markMessageRead, updateAdminUser, updatePost, updateSchoolProfile } from './db'
+import { countVisitorFeedback, createAdminUser, createMessage, createPost, createVisitorFeedback, deleteAdminUser, deleteMessage, deletePost, deleteVisitorFeedback, getSchoolProfile, listAdminUsers, listMessages, listPosts, listRoles, listVisitorFeedback, markMessageRead, markVisitorFeedbackRead, updateAdminUser, updatePost, updateSchoolProfile } from './db'
 import { ensureInitialPasswords } from './db'
 import { login, logout, requireAuth, requirePermission, setSession } from './auth'
 
@@ -26,6 +26,14 @@ app.post('/api/public/messages', async (c) => {
   if (!body.name?.trim() || !body.contact?.trim() || !body.message?.trim()) return c.json({ error: 'Nama, kontak, dan pesan wajib diisi' }, 400)
   if (body.message.trim().length < 10) return c.json({ error: 'Pesan terlalu singkat' }, 400)
   return c.json({ data: createMessage(body.name.trim(), body.contact.trim(), body.message.trim()) }, 201)
+})
+app.get('/api/public/feedback/stats', (c) => c.json({ data: { count: countVisitorFeedback() } }))
+app.post('/api/public/feedback', async (c) => {
+  const body = await c.req.json<{ name?: string; contact?: string; type?: string; message?: string }>()
+  if (!body.name?.trim() || !body.message?.trim()) return c.json({ error: 'Nama dan masukan wajib diisi' }, 400)
+  if (!['comment', 'suggestion', 'feedback'].includes(body.type || '')) return c.json({ error: 'Jenis masukan tidak valid' }, 400)
+  if (body.message.trim().length < 10) return c.json({ error: 'Masukan terlalu singkat' }, 400)
+  return c.json({ data: createVisitorFeedback(body.name.trim(), body.contact?.trim() || '', body.type as 'comment' | 'suggestion' | 'feedback', body.message.trim()) }, 201)
 })
 app.post('/api/auth/logout', requireAuth, (c) => { logout(c); return c.json({ message: 'Logout berhasil' }) })
 app.get('/api/auth/me', requireAuth, (c) => c.json({ data: c.get('user') }))
@@ -68,6 +76,9 @@ app.put('/api/admin/profile', requireAuth, requirePermission('profile:update'), 
 app.get('/api/admin/messages', requireAuth, requirePermission('messages:read'), (c) => c.json({ data: listMessages() }))
 app.put('/api/admin/messages/:id/read', requireAuth, requirePermission('messages:update'), (c) => markMessageRead(Number(c.req.param('id'))) ? c.json({ message: 'Pesan ditandai sudah dibaca' }) : c.json({ error: 'Pesan tidak ditemukan' }, 404))
 app.delete('/api/admin/messages/:id', requireAuth, requirePermission('messages:delete'), (c) => deleteMessage(Number(c.req.param('id'))) ? c.json({ message: 'Pesan dihapus' }) : c.json({ error: 'Pesan tidak ditemukan' }, 404))
+app.get('/api/admin/visitors', requireAuth, requirePermission('messages:read'), (c) => c.json({ data: listVisitorFeedback() }))
+app.put('/api/admin/visitors/:id/read', requireAuth, requirePermission('messages:update'), (c) => markVisitorFeedbackRead(Number(c.req.param('id'))) ? c.json({ message: 'Masukan ditandai sudah dibaca' }) : c.json({ error: 'Masukan tidak ditemukan' }, 404))
+app.delete('/api/admin/visitors/:id', requireAuth, requirePermission('messages:delete'), (c) => deleteVisitorFeedback(Number(c.req.param('id'))) ? c.json({ message: 'Masukan dihapus' }) : c.json({ error: 'Masukan tidak ditemukan' }, 404))
 app.get('/api/admin/posts', requireAuth, requirePermission('content:read'), (c) => c.json({ data: listPosts(c.req.query('type')) }))
 app.post('/api/admin/posts', requireAuth, requirePermission('content:create'), async (c) => {
   const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; category?: string; status?: string }>()
@@ -92,6 +103,7 @@ app.get('/admin/konten', requireAuth, async (c) => c.html(await Bun.file('./publ
 app.get('/admin/pengguna', requireAuth, async (c) => c.html(await Bun.file('./public/users.html').text()))
 app.get('/admin/profil', requireAuth, async (c) => c.html(await Bun.file('./public/school-profile.html').text()))
 app.get('/admin/pesan', requireAuth, async (c) => c.html(await Bun.file('./public/messages.html').text()))
+app.get('/admin/pengunjung', requireAuth, async (c) => c.html(await Bun.file('./public/visitors.html').text()))
 app.use('/*', serveStatic({ root: './public' }))
 app.get('/', serveStatic({ path: './public/index.html' }))
 app.get('/profil', serveStatic({ path: './public/profil.html' }))

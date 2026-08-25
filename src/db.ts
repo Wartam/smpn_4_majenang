@@ -90,6 +90,18 @@ db.run(`
 `)
 
 db.run(`
+  CREATE TABLE IF NOT EXISTS visitor_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    contact TEXT NOT NULL DEFAULT '',
+    type TEXT NOT NULL CHECK (type IN ('comment', 'suggestion', 'feedback')),
+    message TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'unread' CHECK (status IN ('unread', 'read')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )
+`)
+
+db.run(`
   INSERT OR IGNORE INTO school_profile (id, school_name, tagline, address, phone, email, founded_year, students, teachers, classrooms, vision, mission)
   VALUES (1, 'SMP Negeri 4 Majenang', 'Melangkah bersama, meraih masa depan.', 'Jl. Raya Majenang– Sepatnunggal KM-7,Majenang 53257', '085154989537', 'web@smpn04majenang.sch.id', 2006, 3000, 33, 18, 'Terwujudnya peserta didik yang beriman, berkarakter, berprestasi, berwawasan lingkungan, dan mampu beradaptasi dengan perkembangan zaman.', 'Menyelenggarakan pembelajaran yang aktif, kreatif, dan berpihak pada murid serta membangun budaya sekolah yang ramah, disiplin, dan kolaboratif.')
 `)
@@ -205,6 +217,27 @@ export function markMessageRead(id: number) {
 
 export function deleteMessage(id: number) {
   return db.query('DELETE FROM contact_messages WHERE id = ?').run(id).changes > 0
+}
+
+export function listVisitorFeedback() {
+  return db.query('SELECT * FROM visitor_feedback ORDER BY CASE status WHEN \'unread\' THEN 0 ELSE 1 END, created_at DESC').all()
+}
+
+export function createVisitorFeedback(name: string, contact: string, type: 'comment' | 'suggestion' | 'feedback', message: string) {
+  const result = db.query('INSERT INTO visitor_feedback (name, contact, type, message) VALUES (?, ?, ?, ?)').run(name, contact, type, message)
+  return db.query('SELECT * FROM visitor_feedback WHERE id = ?').get(result.lastInsertRowid)
+}
+
+export function markVisitorFeedbackRead(id: number) {
+  return db.query("UPDATE visitor_feedback SET status = 'read' WHERE id = ?").run(id).changes > 0
+}
+
+export function deleteVisitorFeedback(id: number) {
+  return db.query('DELETE FROM visitor_feedback WHERE id = ?').run(id).changes > 0
+}
+
+export function countVisitorFeedback() {
+  return (db.query('SELECT COUNT(*) AS count FROM visitor_feedback').get() as { count: number }).count
 }
 
 export function listRoles() {
