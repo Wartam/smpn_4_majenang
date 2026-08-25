@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
-import { createAdminUser, createMessage, createPost, deleteAdminUser, deleteMessage, deletePost, getSchoolProfile, listAdminUsers, listMessages, listPosts, listRoles, markMessageRead, updateAdminUser, updateSchoolProfile } from './db'
+import { createAdminUser, createMessage, createPost, deleteAdminUser, deleteMessage, deletePost, getSchoolProfile, listAdminUsers, listMessages, listPosts, listRoles, markMessageRead, updateAdminUser, updatePost, updateSchoolProfile } from './db'
 import { ensureInitialPasswords } from './db'
 import { login, logout, requireAuth, requirePermission, setSession } from './auth'
 
