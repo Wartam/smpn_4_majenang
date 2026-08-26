@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smpn4-majenang-v13'
+const CACHE_NAME = 'smpn4-majenang-v14'
 
 const APP_SHELL = [
   '/',
