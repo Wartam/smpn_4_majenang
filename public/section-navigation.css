@@ -1,0 +1,4 @@
+body.section-focus-mode main>section:not(.active-section){display:none}
+body.section-focus-mode main>.active-section{display:block}
+body.section-focus-mode .site-header{position:sticky;top:0;background:var(--blue);z-index:10}
+body:not(.profile-page) main>#kontak{display:none!important}

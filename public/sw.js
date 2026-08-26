@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smpn4-majenang-v7'
+const CACHE_NAME = 'smpn4-majenang-v13'
 
 const APP_SHELL = [
   '/',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   '/styles.css',
   '/typography.css',
   '/brand.css',
+  '/section-navigation.css',
   '/app.js',
   '/site-profile.js',
   '/logo-smpn4-transparan.png',

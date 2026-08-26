@@ -1,11 +1,71 @@
 import { Hono } from 'hono'
 import { serveStatic } from 'hono/bun'
-import { countVisitorFeedback, createAdminUser, createMessage, createPost, createVisitorFeedback, deleteAdminUser, deleteMessage, deletePost, deleteVisitorFeedback, getSchoolProfile, listAdminUsers, listMessages, listPosts, listRoles, listVisitorFeedback, markMessageRead, markVisitorFeedbackRead, updateAdminUser, updatePost, updateSchoolProfile } from './db'
+import sharp from 'sharp'
+import { countVisitorFeedback, createAdminUser, createMessage, createPost, createVisitorFeedback, deleteAdminUser, deleteMessage, deletePost, deleteVisitorFeedback, getPublishedPost, getSchoolProfile, listAdminUsers, listMessages, listPosts, listPublishedPosts, listRoles, listVisitorFeedback, markMessageRead, markVisitorFeedbackRead, updateAdminUser, updatePost, updateSchoolProfile } from './db'
 import { ensureInitialPasswords } from './db'
 import { login, logout, requireAuth, requirePermission, setSession } from './auth'
 
 const app = new Hono()
 
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+const TARGET_IMAGE_SIZE = 100 * 1024
+
+async function processPostImage(imageUrl?: string) {
+  if (!imageUrl) return ''
+  if (imageUrl.startsWith('/')) return imageUrl
+  if (!imageUrl.startsWith('data:image/')) throw new Error('Format gambar tidak valid')
+
+  const separator = imageUrl.indexOf(',')
+  if (separator < 0) throw new Error('Data gambar tidak valid')
+
+  const encoded = imageUrl.slice(separator + 1)
+  const input = Buffer.from(encoded, 'base64')
+
+  if (!input.length || input.length > MAX_UPLOAD_SIZE) {
+    throw new Error('Ukuran gambar maksimal 10 MB')
+  }
+
+  let best: Buffer | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const width of [1600, 1280, 1024, 800]) {
+    for (const quality of [88, 78, 68, 58, 48, 38, 28]) {
+      const output = await sharp(input)
+        .rotate()
+        .resize({
+          width,
+          height: 1200,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({
+          quality,
+          effort: 4,
+        })
+        .toBuffer()
+
+      const distance = Math.abs(output.length - TARGET_IMAGE_SIZE)
+
+      if (distance < bestDistance) {
+        best = output
+        bestDistance = distance
+      }
+
+      if (output.length <= TARGET_IMAGE_SIZE && width <= 1024) break
+    }
+
+    if (best && best.length <= TARGET_IMAGE_SIZE && width <= 1024) break
+  }
+
+  if (!best) throw new Error('Gambar tidak dapat diproses')
+
+  const filename = `post-${Date.now()}-${crypto.randomUUID()}.webp`
+  const filePath = `./public/uploads/posts/${filename}`
+
+  await Bun.write(filePath, best)
+
+  return `/uploads/posts/${filename}`
+}
 app.onError((error, c) => {
   console.error(error)
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Terjadi kesalahan server. Silakan coba lagi.' }, 500)
@@ -80,21 +140,51 @@ app.delete('/api/admin/messages/:id', requireAuth, requirePermission('messages:d
 app.get('/api/admin/visitors', requireAuth, requirePermission('messages:read'), (c) => c.json({ data: listVisitorFeedback() }))
 app.put('/api/admin/visitors/:id/read', requireAuth, requirePermission('messages:update'), (c) => markVisitorFeedbackRead(Number(c.req.param('id'))) ? c.json({ message: 'Masukan ditandai sudah dibaca' }) : c.json({ error: 'Masukan tidak ditemukan' }, 404))
 app.delete('/api/admin/visitors/:id', requireAuth, requirePermission('messages:delete'), (c) => deleteVisitorFeedback(Number(c.req.param('id'))) ? c.json({ message: 'Masukan dihapus' }) : c.json({ error: 'Masukan tidak ditemukan' }, 404))
+app.get('/api/public/posts', (c) => {
+  return c.json({ data: listPublishedPosts(c.req.query('type')) })
+})
+app.get('/api/public/posts/:id', (c) => {
+  const id = Number(c.req.param('id'))
+
+  if (!Number.isInteger(id)) {
+    return c.json({ error: 'ID konten tidak valid' }, 400)
+  }
+
+  const post = getPublishedPost(id)
+
+  if (!post) {
+    return c.json({ error: 'Konten tidak ditemukan' }, 404)
+  }
+
+  return c.json({ data: post })
+})
 app.get('/api/admin/posts', requireAuth, requirePermission('content:read'), (c) => c.json({ data: listPosts(c.req.query('type')) }))
 app.post('/api/admin/posts', requireAuth, requirePermission('content:create'), async (c) => {
-  const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; category?: string; status?: string }>()
+  const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; content?: string; imageUrl?: string; category?: string; status?: string }>()
   if (!['news', 'blog'].includes(body.type || '') || !body.title?.trim()) return c.json({ error: 'Jenis konten dan judul wajib diisi' }, 400)
   if (body.status && !['draft', 'published'].includes(body.status)) return c.json({ error: 'Status konten tidak valid' }, 400)
+  let imageUrl = ''
+  try {
+    imageUrl = await processPostImage(body.imageUrl)
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : 'Gambar gagal diproses' }, 400)
+  }
   const user = (c as any).get('user') as { id: number }
-  const post = createPost({ type: body.type as 'news' | 'blog', title: body.title.trim(), excerpt: body.excerpt?.trim() || '', category: body.category?.trim() || 'Umum', status: (body.status as 'draft' | 'published') || 'draft', authorId: user.id })
+  const post = createPost({ type: body.type as 'news' | 'blog', title: body.title.trim(), excerpt: body.excerpt?.trim() || '', content: body.content?.trim() || '', imageUrl, category: body.category?.trim() || 'Umum', status: (body.status as 'draft' | 'published') || 'draft', authorId: user.id })
   return c.json({ data: post }, 201)
 })
 app.put('/api/admin/posts/:id', requireAuth, requirePermission('content:update'), async (c) => {
   const id = Number(c.req.param('id'))
-  const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; category?: string; status?: string }>()
+  const body = await c.req.json<{ type?: string; title?: string; excerpt?: string; content?: string; imageUrl?: string; category?: string; status?: string }>()
   if (!Number.isInteger(id) || !['news', 'blog'].includes(body.type || '') || !body.title?.trim()) return c.json({ error: 'Data konten tidak valid' }, 400)
   if (body.status && !['draft', 'published'].includes(body.status)) return c.json({ error: 'Status konten tidak valid' }, 400)
-  const post = updatePost(id, { type: body.type as 'news' | 'blog', title: body.title.trim(), excerpt: body.excerpt?.trim() || '', category: body.category?.trim() || 'Umum', status: (body.status as 'draft' | 'published') || 'draft' })
+  let imageUrl = ''
+  try {
+    imageUrl = await processPostImage(body.imageUrl)
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : 'Gambar gagal diproses' }, 400)
+  }
+  const post = updatePost(id, { type: body.type as 'news' | 'blog', title: body.title.trim(), excerpt: body.excerpt?.trim() || '', content: body.content?.trim() || '', imageUrl, category: body.category?.trim() || 'Umum', status: (body.status as 'draft' | 'published') || 'draft' })
   return post ? c.json({ data: post }) : c.json({ error: 'Konten tidak ditemukan' }, 404)
 })
 app.delete('/api/admin/posts/:id', requireAuth, requirePermission('content:delete'), (c) => deletePost(Number(c.req.param('id'))) ? c.json({ message: 'Konten dihapus' }) : c.json({ error: 'Konten tidak ditemukan' }, 404))

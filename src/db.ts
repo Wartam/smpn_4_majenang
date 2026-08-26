@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, unlinkSync } from 'node:fs'
 import { Database } from 'bun:sqlite'
 
 mkdirSync('./data', { recursive: true })
@@ -51,6 +51,8 @@ db.run(`
     type TEXT NOT NULL CHECK (type IN ('news', 'blog')),
     title TEXT NOT NULL,
     excerpt TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL DEFAULT '',
+    image_url TEXT NOT NULL DEFAULT '',
     category TEXT NOT NULL DEFAULT 'Umum',
     status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
     author_id INTEGER,
@@ -59,6 +61,14 @@ db.run(`
     FOREIGN KEY (author_id) REFERENCES admin_users(id)
   )
 `)
+
+for (const column of ['content', 'image_url']) {
+  try {
+    db.run(`ALTER TABLE posts ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`)
+  } catch {
+    // Column already exists on databases created by a previous version.
+  }
+}
 
 db.run(`
   CREATE TABLE IF NOT EXISTS school_profile (
@@ -273,18 +283,74 @@ export function listPosts(type?: string) {
   return (type === 'news' || type === 'blog' ? query.all(type) : query.all())
 }
 
-export function createPost(input: { type: 'news' | 'blog'; title: string; excerpt: string; category: string; status: 'draft' | 'published'; authorId: number }) {
-  const result = db.query(`INSERT INTO posts (type, title, excerpt, category, status, author_id) VALUES (?, ?, ?, ?, ?, ?)`).run(input.type, input.title, input.excerpt, input.category, input.status, input.authorId)
+export function listPublishedPosts(type?: string) {
+  const validType = type === 'news' || type === 'blog' ? type : undefined
+  const query = validType
+    ? db.query(`
+        SELECT posts.*, admin_users.name AS author_name
+        FROM posts
+        LEFT JOIN admin_users ON admin_users.id = posts.author_id
+        WHERE posts.type = ? AND posts.status = 'published'
+        ORDER BY posts.updated_at DESC
+      `)
+    : db.query(`
+        SELECT posts.*, admin_users.name AS author_name
+        FROM posts
+        LEFT JOIN admin_users ON admin_users.id = posts.author_id
+        WHERE posts.status = 'published'
+        ORDER BY posts.updated_at DESC
+      `)
+  return validType ? query.all(validType) : query.all()
+}
+
+export function getPublishedPost(id: number) {
+  return db.query(`
+    SELECT posts.*, admin_users.name AS author_name
+    FROM posts
+    LEFT JOIN admin_users ON admin_users.id = posts.author_id
+    WHERE posts.id = ? AND posts.status = 'published'
+    LIMIT 1
+  `).get(id)
+}
+
+export function createPost(input: { type: 'news' | 'blog'; title: string; excerpt: string; content: string; imageUrl: string; category: string; status: 'draft' | 'published'; authorId: number }) {
+  const result = db.query(`INSERT INTO posts (type, title, excerpt, content, image_url, category, status, author_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(input.type, input.title, input.excerpt, input.content, input.imageUrl, input.category, input.status, input.authorId)
   return db.query('SELECT * FROM posts WHERE id = ?').get(result.lastInsertRowid)
 }
 
-export function updatePost(id: number, input: { type: 'news' | 'blog'; title: string; excerpt: string; category: string; status: 'draft' | 'published' }) {
-  db.query(`UPDATE posts SET type = ?, title = ?, excerpt = ?, category = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(input.type, input.title, input.excerpt, input.category, input.status, id)
+export function updatePost(id: number, input: { type: 'news' | 'blog'; title: string; excerpt: string; content: string; imageUrl: string; category: string; status: 'draft' | 'published' }) {
+  const oldPost = db.query('SELECT image_url FROM posts WHERE id = ?').get(id) as { image_url?: string } | null
+
+  db.query(`UPDATE posts SET type = ?, title = ?, excerpt = ?, content = ?, image_url = ?, category = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(input.type, input.title, input.excerpt, input.content, input.imageUrl, input.category, input.status, id)
+
+  if (
+    oldPost?.image_url &&
+    oldPost.image_url !== input.imageUrl &&
+    oldPost.image_url.startsWith('/uploads/posts/')
+  ) {
+    try {
+      unlinkSync(`./public${oldPost.image_url}`)
+    } catch {
+      // File mungkin sudah tidak ada.
+    }
+  }
+
   return db.query('SELECT * FROM posts WHERE id = ?').get(id)
 }
 
 export function deletePost(id: number) {
-  return db.query('DELETE FROM posts WHERE id = ?').run(id).changes > 0
+  const post = db.query('SELECT image_url FROM posts WHERE id = ?').get(id) as { image_url?: string } | null
+  const deleted = db.query('DELETE FROM posts WHERE id = ?').run(id).changes > 0
+
+  if (deleted && post?.image_url?.startsWith('/uploads/posts/')) {
+    try {
+      unlinkSync(`./public${post.image_url}`)
+    } catch {
+      // File mungkin sudah tidak ada.
+    }
+  }
+
+  return deleted
 }
 
 const postCount = db.query('SELECT COUNT(*) AS count FROM posts').get() as { count: number }
